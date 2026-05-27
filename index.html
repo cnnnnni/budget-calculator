@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>出國旅遊預算自訂分配助手</title>
+    <style>
+        body { font-family: 'PingFang TC', sans-serif; background-color: #e0f2f1; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px 0; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); width: 100%; max-width: 480px; }
+        h2 { text-align: center; color: #00796b; margin-top: 0; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #444; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        
+        /* 比例輸入框樣式 */
+        .ratio-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; background: #f0f4f4; padding: 12px; border-radius: 8px; }
+        .ratio-group { display: flex; flex-direction: column; }
+        .ratio-group label { font-size: 14px; color: #555; }
+        .ratio-group input { padding: 8px; font-size: 14px; text-align: center; }
+
+        button { width: 100%; padding: 12px; background-color: #ff9800; color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        button:hover { background-color: #f57c00; }
+        .result-box { margin-top: 20px; padding: 15px; background-color: #f9f9f9; border-radius: 8px; display: none; }
+        .result-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .total-amount { font-size: 22px; color: #d32f2f; font-weight: bold; text-align: center; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>✈️ 旅遊換匯預算自訂分配</h2>
+    
+    <div class="input-group">
+        <label>台幣總預算 (TWD):</label>
+        <input type="number" id="twdAmount" placeholder="例如: 50000" value="30000">
+    </div>
+    
+    <div class="input-group">
+        <label>目的地匯率 (1台幣兌換多少外幣):</label>
+        <select id="rate">
+            <option value="4.6">日圓 (JPY) - 約 4.6</option>
+            <option value="42">韓元 (KRW) - 約 42</option>
+            <option value="0.23">港幣 (HKD) - 約 0.23</option>
+            <option value="1.1">泰銖 (THB) - 約 1.1</option>
+        </select>
+    </div>
+
+    <label>自訂預算分配比例 (%):</label>
+    <div class="ratio-container">
+        <div class="ratio-group">
+            <label>🏠 住宿 (%)</label>
+            <input type="number" id="pStay" value="40" min="0" max="100">
+        </div>
+        <div class="ratio-group">
+            <label>🍱 美食 (%)</label>
+            <input type="number" id="pFood" value="25" min="0" max="100">
+        </div>
+        <div class="ratio-group">
+            <label>🚌 交通 (%)</label>
+            <input type="number" id="pTraffic" value="15" min="0" max="100">
+        </div>
+        <div class="ratio-group">
+            <label>🛍️ 購物 (%)</label>
+            <input type="number" id="pShopping" value="20" min="0" max="100">
+        </div>
+    </div>
+    
+    <button onclick="calculateBudget()">開始計算我的預算</button>
+    
+    <div class="result-box" id="result">
+        <div class="total-amount" id="totalForeign"></div>
+        <div class="result-item"><span id="lblStay">🏠 住宿預算</span><span id="stay"></span></div>
+        <div class="result-item"><span id="lblFood">🍱 美食預算</span><span id="food"></span></div>
+        <div class="result-item"><span id="lblTraffic">🚌 交通預算</span><span id="traffic"></span></div>
+        <div class="result-item"><span id="lblShopping">🛍️ 購物/預備金</span><span id="shopping"></span></div>
+    </div>
+</div>
+
+<script>
+    function calculateBudget() {
+        let twd = parseFloat(document.getElementById('twdAmount').value);
+        let rate = parseFloat(document.getElementById('rate').value);
+        let currencyName = document.getElementById('rate').options[document.getElementById('rate').selectedIndex].text.split(' ')[0];
+        
+        // 讀取自訂比例
+        let pStay = parseFloat(document.getElementById('pStay').value) || 0;
+        let pFood = parseFloat(document.getElementById('pFood').value) || 0;
+        let pTraffic = parseFloat(document.getElementById('pTraffic').value) || 0;
+        let pShopping = parseFloat(document.getElementById('pShopping').value) || 0;
+
+        // 防呆機制：檢查加起來是否等於 100%
+        let totalPercent = pStay + pFood + pTraffic + pShopping;
+        if (totalPercent !== 100) {
+            alert("錯誤：您的分配比例總和為 " + totalPercent + "%，必須剛好等於 100% 才能正確計算喔！");
+            return;
+        }
+        
+        if (isNaN(twd) || twd <= 0) { alert("請輸入正確預算"); return; }
+        
+        let total = twd * rate;
+        document.getElementById('totalForeign').innerText = `總外幣: ${total.toLocaleString()} ${currencyName}`;
+        
+        // 更新結果標籤與數值
+        document.getElementById('lblStay').innerText = `🏠 住宿預算 (${pStay}%)`;
+        document.getElementById('lblFood').innerText = `🍱 美食預算 (${pFood}%)`;
+        document.getElementById('lblTraffic').innerText = `🚌 交通預算 (${pTraffic}%)`;
+        document.getElementById('lblShopping').innerText = `🛍️ 購物/預備金 (${pShopping}%)`;
+
+        document.getElementById('stay').innerText = (total * (pStay / 100)).toLocaleString() + ` ${currencyName}`;
+        document.getElementById('food').innerText = (total * (pFood / 100)).toLocaleString() + ` ${currencyName}`;
+        document.getElementById('traffic').innerText = (total * (pTraffic / 100)).toLocaleString() + ` ${currencyName}`;
+        document.getElementById('shopping').innerText = (total * (pShopping / 100)).toLocaleString() + ` ${currencyName}`;
+        
+        document.getElementById('result').style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
